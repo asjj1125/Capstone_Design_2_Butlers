@@ -1,0 +1,41 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using KMJ.UI;
+
+public class monsterCount : MonoBehaviour
+{
+    public GameObject potal;
+    int maxCount;
+    public Text _Script;
+    // Start is called before the first frame update
+    void Start()
+    {
+        if(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name=="Tutorial")
+        {
+            maxCount = 1;
+        }
+        if(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name=="Stage1")
+        {
+            maxCount = 10;
+        }
+        if(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name=="Stage2")
+        {
+            maxCount = 15;
+        }
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if(GameManager.Instance().monsterCount >= maxCount)
+        {
+            potal.SetActive(true);
+            if(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name!="Tutorial")
+            {
+                _Script.text = "근처에 포탈이 생성되었습니다.";
+            }
+        }
+    }
+}

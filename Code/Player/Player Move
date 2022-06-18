@@ -1,0 +1,381 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using K.Monster;
+using playerWeapon;
+using KMJ.UI;
+using FirstGearGames.SmoothCameraShaker;
+
+namespace playerCat
+{
+    public class playerMove : MonoBehaviour
+    {
+
+        //move
+        [SerializeField]
+        private Transform characterBody;
+        [SerializeField]
+        private Transform cameraArm;
+
+        //dash 정보
+        float lastDashTime;
+        private bool isDash;
+        private float dashTime;
+        private float speed;
+
+        //item 체크
+        GameObject nearObject;
+
+        //쥐고 있는 무기 정보
+        //public weapon handObject;
+        //public weaponController handWeapon;
+
+        /*
+        public bool isDagger;
+        public bool isGiantsword;
+        public bool isStaff;
+        */
+
+        //이미지 변경
+        changeImage image;
+
+        /*
+        //swap 정보
+        public GameObject[] weapons;
+        public int[] hasWeapons;
+        int hasWeaponCount;
+        public bool isSwap;
+        int weaponIndex = -1;
+        */
+
+        //공격 정보
+        public bool isAttack;
+        private bool isAttacked;
+
+        private bool isDead;
+
+        /////////////////////////////////
+        Animator anim;
+        Rigidbody rigid;
+        CapsuleCollider capsuleCollider;
+        GameObject colEnemy;
+        /////////////////////////////////
+        public ShakeData MyShake;
+        /// 
+        SceneData sceneData;
+        /// ///////////////////////////////////
+        /// 파티클
+        public ParticleSystem particle;
+        // 사운드
+        [SerializeField]
+        AudioClip hit;
+        [SerializeField]
+        AudioClip dead;
+        [SerializeField]
+        AudioClip eat;
+        [SerializeField]
+        AudioClip dash;
+        
+
+
+        ////////////////////////////...///
+        playerStatReset stat;
+        public playerStatReset plSTAT
+        {
+            get
+            {
+                return stat;
+            }
+            set
+            {
+                stat = value;
+            }
+        }
+
+        void Awake()
+        {
+            rigid = this.GetComponent<Rigidbody>();
+            capsuleCollider = this.GetComponent<CapsuleCollider>();
+
+            if(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "Tutorial" )
+            {
+                sceneData = GameObject.Find("SceneData").GetComponent<SceneData>();
+            }
+            
+            if(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "Stage1" && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "Tutorial")
+            {
+                stat = new playerStatReset(sceneData.plSTAT.speed, sceneData.plSTAT.hp, sceneData.plSTAT.plusDemage);
+                Debug.Log(sceneData.plSTAT.speed);
+                Debug.Log(sceneData.plSTAT.hp);
+                Debug.Log(sceneData.plSTAT.plusDemage);
+            }
+            else
+                stat = new playerStatReset(10f, 3, 0f);
+        }
+
+        void Start()
+        {
+            anim = GetComponentInChildren<Animator>();
+            StartCoroutine(Death());
+        }
+        
+
+        public void Move(Vector2 inputDirection)
+        {
+            Vector2 moveInput = inputDirection;
+            bool isMove = moveInput.magnitude != 0;
+            
+            if (isMove && !isAttack && !isDead && !isAttacked)
+            {
+                Vector3 lookForward = new Vector3(cameraArm.forward.x, 0f, cameraArm.forward.z).normalized;
+                Vector3 lookRight = new Vector3(cameraArm.right.x, 0f, cameraArm.right.z).normalized;
+                Vector3 moveDir = lookForward * moveInput.y + lookRight * moveInput.x;
+                characterBody.forward = moveDir;
+                transform.position += moveDir * Time.deltaTime * stat.speed;
+            }
+            anim.SetBool("isWalk", isMove);
+        }
+
+        public void Dash()
+        {
+            if(Time.time - lastDashTime > 0.3f && isDash && !isAttack && !isAttacked && !isDead)
+            {
+                this.GetComponent<AudioSource>().clip = dash;
+                this.GetComponent<AudioSource>().Play();
+                capsuleCollider.enabled = false;
+                Vector3 lookForward = new Vector3(transform.forward.x, 0f, transform.forward.z).normalized;
+                speed = stat.speed * 2;
+                transform.position += 1.0f * lookForward * Time.deltaTime * speed;
+
+                Invoke("DashOut", 0.4f);
+            }
+        }
+
+        public void DashOut()
+        {
+            speed *= 0.5f;
+            capsuleCollider.enabled = true;
+            isDash = false;
+        }
+
+        public void clickDash()
+        {
+            lastDashTime = Time.time;
+            isDash = true;
+            anim.SetBool("isDash", isDash);
+        }
+
+        void OnTriggerEnter(Collider collision)
+        {
+            colEnemy = collision.gameObject;
+            if (!isDead)
+            {
+                if (collision.gameObject.tag == "Enemy" && !isDash)
+                {
+                    CameraShakerHandler.Shake(MyShake);
+                    particle.Play();
+                    this.GetComponent<AudioSource>().clip = hit;
+                    this.GetComponent<AudioSource>().Play();
+
+                    float a;
+                    if(collision.gameObject.name == "PoopNormal")
+                    {
+                        a = colEnemy.GetComponent<M_Dump>().DATA.Attack;
+                        stat.hp -= a;
+                    }
+                    
+                    if(collision.gameObject.name == "ShootingNormal")
+                    {
+                        a = colEnemy.GetComponent<M_Shooter>().DATA.Attack;
+                        stat.hp -= a;
+                    }
+
+                    if (collision.gameObject.name == "walkMoai")
+                    {
+                        a = colEnemy.GetComponent<M_Cheese>().DATA.Attack;
+                        stat.hp -= a;
+                    }
+
+                    if (collision.transform.parent.gameObject.name == "Rat")
+                    {
+                        a = collision.transform.parent.gameObject.GetComponent<M_Rat>().DATA.Attack;
+                        stat.hp -= a;
+                    }
+
+                    isAttacked = true;
+                    anim.SetTrigger("isAttacked");
+                    
+                    //stat.hp--;
+                    //rigid.AddForce(0f, 300f, -150f);
+                    //Debug.Log("충돌 HP : " + stat.hp);
+                }
+
+                if (collision.gameObject.tag == "nid" && !isDash)
+                {
+                    CameraShakerHandler.Shake(MyShake);
+                    particle.Play();
+                    this.GetComponent<AudioSource>().clip = hit;
+                    this.GetComponent<AudioSource>().Play();
+
+                    float a = colEnemy.transform.parent.transform.parent.GetComponent<M_Shooter>().DATA.Attack;
+                    isAttacked = true;
+                    anim.SetTrigger("isAttacked");
+                    stat.hp -= a;
+                    //rigid.AddForce(0f, 300f, -150f);
+                }
+                Invoke("outAttacked", 1f);
+            }
+        }
+
+        void outAttacked()
+        {
+            particle.Stop();
+            isAttacked = false;
+        }
+
+        void OnTriggerStay(Collider other)
+        {
+            if (other.tag == "item")
+            {
+
+                this.GetComponent<AudioSource>().clip = eat;
+                this.GetComponent<AudioSource>().Play();
+
+                if (other.GetComponent<item>().type == item.Type.weapon)
+                {
+                    nearObject = other.gameObject;
+                    item item = nearObject.GetComponent<item>();
+                    //int weaponIndex = item.value;
+                    //hasWeapons[weaponIndex] = true;
+                    GetComponent<weaponController>().hasWeapons[GetComponent<weaponController>().hasWeaponCount] = item.value;
+                    GetComponent<weaponController>().hasWeaponCount++;
+                    GetComponent<weaponController>().clickSwap();
+
+                    Destroy(nearObject);
+                }
+                //Debug.Log(nearObject.name);
+
+                if (other.GetComponent<item>().type == item.Type.heart)
+                {
+                    nearObject = other.gameObject;
+                    stat.hp++;
+                    Destroy(nearObject);
+                }
+
+                if (other.GetComponent<item>().type == item.Type.speedup)
+                {
+                    nearObject = other.gameObject;
+                    stat.speed += 5f;
+                    Destroy(nearObject);
+                }
+
+                if (other.GetComponent<item>().type == item.Type.atkdup)
+                {
+                    nearObject = other.gameObject;
+                    stat.plusDemage += 2f;
+                    GetComponent<weaponController>().setDemage();
+                    Destroy(nearObject);
+                }
+            }
+        }
+
+        void OnTriggerExit(Collider other)
+        {
+            if (other.tag == "item")
+            {
+                if (other.GetComponent<item>().type == item.Type.weapon)
+                {
+                    nearObject = null;
+                }
+            }
+            else return;
+
+        }
+
+        void attack()
+        {   
+            if(GetComponent<weaponController>().handObject && isAttack && !isDead)
+            {
+                if(GetComponent<weaponController>().isDagger) {anim.SetTrigger("attackDagger");}
+                if(GetComponent<weaponController>().isGiantsword) {anim.SetTrigger("attackGiantsword");}
+                if(GetComponent<weaponController>().isStaff) {anim.SetTrigger("attackStaff");}
+                //if(weaponIndex==0){anim.SetTrigger("attackDagger");}
+                //if(weaponIndex==1){anim.SetTrigger("attackGiantsword");}
+                //if(weaponIndex==2){anim.SetTrigger("attackStaff");}
+                GetComponent<weaponController>().handObject.GetComponent<weapon>().Use();
+            }
+            isAttack = false;
+        }
+
+        public void clickAttack()
+        {
+            isAttack = true;
+        }
+
+        /*
+        public void searchWeapon()
+        {
+            if (isDagger == true)
+            {
+                anim.SetBool("handDagger", isDagger);
+                //Debug.Log("단검on");
+            }
+
+            else if (isGiantsword == true)
+            {
+                anim.SetBool("handGiantsword", isGiantsword);
+                //Debug.Log("장검on");
+            }
+
+            else if (isStaff == true)
+            {
+                anim.SetBool("handStaff", isStaff);
+                //Debug.Log("스태프on");
+            }
+        }
+        */
+
+        IEnumerator Death()
+        {
+            while (true)
+            {
+               
+                // 체력이 0이하일 때
+                if (stat.hp <= 0)
+                {
+                    if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "Tutorial")
+                    {
+                        isDead = true;
+                        anim.SetTrigger("isDie");
+                        this.GetComponent<AudioSource>().clip = dead;
+                        this.GetComponent<AudioSource>().Play();
+                        GameManager.Instance().sceneCount = 0;
+                        yield return new WaitForSeconds(2);
+                        UnityEngine.SceneManagement.SceneManager.LoadScene("StartMap");
+                    }
+                    else { stat.hp = 3; }
+
+                }
+ 
+                yield return new WaitForEndOfFrame(); // 매 프레임의 마지막 마다 실행
+            }
+        }
+
+
+
+            // Update is called once per frame
+        void Update()
+        {
+            Dash();
+            attack();
+            if(isDead) {return;}
+            if (stat.hp >3) { stat.hp = 3; }
+        }
+
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
+
+    }
+
+}

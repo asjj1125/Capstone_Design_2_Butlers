@@ -1,0 +1,25 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class profileControl : MonoBehaviour
+{
+    public Image spdSlider;
+    public Image atkSlider;
+    playerCat.playerStatReset st;
+    playerWeapon.weaponController dg;
+    
+    // Start is called before the first frame update
+    void Start()
+    {
+        st = GameObject.Find("player_cat").GetComponent<playerCat.playerMove>().plSTAT;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        spdSlider.fillAmount = st.speed / 100;
+        atkSlider.fillAmount =  (GameObject.Find("player_cat").GetComponent<playerWeapon.weaponController>().plDemage.demage + st.plusDemage) / 64;
+    }
+}

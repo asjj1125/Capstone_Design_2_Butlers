@@ -1,0 +1,58 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace playerCat
+{
+    public class playerBase
+    {
+        float p_hp;
+        float p_spd;
+        float p_dmg;
+        float p_plusD;
+
+        //플레이어 속도
+        public float speed
+        {
+            set {p_spd = value;}
+            get {return p_spd;}
+        }
+
+        //플레이어 HP
+        public float hp
+        {
+            set {p_hp = value;}
+            get {return p_hp;}
+        }
+
+        //플레이어 공격력
+        public float demage
+        {
+            set {p_dmg = value;}
+            get {return p_dmg;}
+        }
+
+        public float plusDemage
+        {
+            set {p_plusD = value;}
+            get {return p_plusD;}
+        }
+        
+
+        //구현되는 대로 더 추가
+
+        public playerBase(float spd, float hp, float plusD)
+        {
+            p_spd = spd;
+            p_hp = hp;
+            p_plusD = plusD;
+        }
+
+        public playerBase(float demage)
+        {
+            p_dmg = demage;
+        }
+
+    }
+}

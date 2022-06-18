@@ -1,0 +1,57 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+//플레이어 캔버스 쿨타임 이미지
+
+public class CooltimeFill : MonoBehaviour
+{
+    public Image image;
+    public Button button;
+    public float coolTime;
+    public bool isClicked = false;
+    float leftTime = 10.0f;
+    float speed = 5.0f;
+
+     // Update is called once per frame
+    void Update () {
+
+        if(isClicked) 
+            if (leftTime > 0)
+            {
+                leftTime -= Time.deltaTime * speed;
+                if(leftTime < 0) {
+                    leftTime = 0;
+                    if(button)
+                        button.enabled = true;
+                    isClicked = true;   
+                }
+
+                float ratio = 1.0f - (leftTime / coolTime);
+                if(image)
+                    image.fillAmount = ratio;
+            }
+    }
+
+    public void StartCoolTime() 
+    {
+        if(button.name == "buttonDash")
+            coolTime = 10f;
+
+        else
+        {
+            if (GameObject.Find("player_cat").GetComponent<playerWeapon.weaponController>().handObject == null) { }
+            if (GameObject.Find("player_cat").GetComponent<playerWeapon.weaponController>().handObject.type == playerWeapon.weapon.Type.Short)
+                coolTime = 3f;
+            if (GameObject.Find("player_cat").GetComponent<playerWeapon.weaponController>().handObject.type == playerWeapon.weapon.Type.Long)
+                coolTime = 7f;
+            if (GameObject.Find("player_cat").GetComponent<playerWeapon.weaponController>().handObject.type == playerWeapon.weapon.Type.fire)
+                coolTime = 12f;
+        }
+        leftTime = coolTime;
+        isClicked = true;
+        if(button) 
+        button.enabled = false; // 버튼 기능을 해지함.
+    }
+}

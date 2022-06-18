@@ -1,0 +1,23 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class HP_control : MonoBehaviour
+{
+    public Slider hpslider;
+    public Slider spdslider;
+    public GameObject player;
+    playerCat.playerStatReset st;
+    // Start is called before the first frame update
+    void Start()
+    {
+        st = player.GetComponent<playerCat.playerMove>().plSTAT;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        hpslider.value = st.hp / 3;
+    }
+}

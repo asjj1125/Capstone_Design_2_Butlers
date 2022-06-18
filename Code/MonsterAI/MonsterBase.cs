@@ -1,4 +1,4 @@
-﻿namespace K.Monster
+namespace K.Monster
 {
     public class MonsterBase
     {

@@ -1,0 +1,54 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+//플레이어 캔버스 패널 이미지 변경 코드
+
+public class changeImage : MonoBehaviour
+{
+
+    public Sprite image_Sword;
+    public Sprite image_Giant;
+    public Sprite image_Staff;
+    playerWeapon.weaponController playerHave;
+
+    Image this_Image;
+
+    public void changeImageDagger()
+    {
+        Debug.Log("단검");
+        this_Image.sprite = image_Sword;
+    }
+
+    public void changeImageGiant()
+    {
+        Debug.Log("검");
+        this_Image.sprite = image_Giant;
+    }
+
+    public void changeImageStaff()
+    {
+        Debug.Log("스태프");
+        this_Image.sprite = image_Staff;
+
+    }
+
+    public void change()
+    {
+
+        if (playerHave.isDagger) { changeImageDagger(); }
+        if (playerHave.isGiantsword) { changeImageGiant(); }
+        if (playerHave.isStaff) { changeImageStaff(); }
+
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        playerHave = GameObject.FindObjectOfType<playerWeapon.weaponController>();
+        Debug.Log("초기 이미지");
+        this_Image = GetComponent<Image>();
+    }
+
+}
